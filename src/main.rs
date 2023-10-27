@@ -12,13 +12,6 @@ fn transform(n: i32) -> i32 {
 const SIZE_X: usize = 25;
 const SIZE_Y: usize = 55;
 
-// trait Movable {
-    
-//     fn forward(&mut self, distance: f32) -> ();
-//     fn backward(&mut self, distance: f32) -> ();
-//     fn right(&mut self, angle_degrees: f32) -> ();
-//     fn left(&mut self, angle_degrees: f32) -> ();
-// }
 
 struct Turtle {
     dir_cmplx: (f32, f32),
@@ -28,7 +21,7 @@ struct Turtle {
 }
 
 #[allow(dead_code)]
-impl /*Movable for*/ Turtle {
+impl Turtle {
     fn forward(&mut self, distance: f32) {
         let (x,  y) = (self.position.0, self.position.1); 
         let (dx, dy) = (self.dir_cmplx.0 * distance, self.dir_cmplx.1 * distance);
@@ -60,7 +53,6 @@ impl /*Movable for*/ Turtle {
     }
 
     fn plot_p(&mut self, x: i32, y: i32) {
-        // dbg!(x, y);
         let x = x + SIZE_X as i32 / 2;
         let y = y + SIZE_Y as i32 / 2;
         if let Some(row) = self.field.get_mut(x as usize) {
@@ -68,20 +60,16 @@ impl /*Movable for*/ Turtle {
                 *cell = b'@';
             }
         }
-        // self.field[x as usize + SIZE_X/2][y as usize + SIZE_Y/2] = b'@';
     }
 
-    #[allow(unused)]
     fn draw_field_line(&mut self, x1: f32, y1: f32, x2: f32, y2: f32) {
         // re-define as closest integers
         let mut x1 = x1.round() as i32;
         let mut y1 = y1.round() as i32;
         let mut x2 = x2.round() as i32;
         let mut y2 = y2.round() as i32;
-        dbg!((x1, y1));
-        dbg!((x2, y2));
 
-        let gt45: bool = ((y2-y1).abs() > (x2-x1).abs()); // slope greater than 45;
+        let gt45: bool = (y2-y1).abs() > (x2-x1).abs(); // slope greater than 45;
         if gt45 {
             mem::swap(&mut x1, &mut y1);
             mem::swap(&mut x2, &mut y2);
@@ -90,11 +78,12 @@ impl /*Movable for*/ Turtle {
         //swap if needed
         if x1 > x2 {
             mem::swap(&mut x1, &mut x2);
-            mem::swap(&mut x2, &mut y2);
+            mem::swap(&mut y1, &mut y2);
         }
-        
+
         let d_err = (y2-y1).abs();
         let dx = x2-x1;
+
         let iy = if y1 < y2 {1} else {-1};
 
         let mut err = dx >> 1; // dx / 2;
@@ -107,7 +96,7 @@ impl /*Movable for*/ Turtle {
                 self.plot_p(y, x);
             }
             err -= d_err;
-            if (err < 0) {
+            if err < 0 {
                 y += iy;
                 err += dx;
             }
@@ -121,7 +110,7 @@ impl /*Movable for*/ Turtle {
                 self.dir_cmplx.0, self.dir_cmplx.1,
                 self.position.0, self.position.1,
                 self.tail_up);
-        io::stdout().flush();
+        io::stdout().flush().ok();
     }
     fn new() -> Self {
         Turtle{dir_cmplx:(0.0, 1.0), 
@@ -131,26 +120,38 @@ impl /*Movable for*/ Turtle {
     }
     fn print_field(&self) {
         println!();
-        for i in self.field {
+        for i in self.field.iter().rev() {
             for j in i {
-                print!("{}", j as char);
+                print!("{}", *j as char);
             }
             println!();
         }
-        io::stdout().flush();
+        io::stdout().flush().ok();
     }
 }
 
 fn main()
 {
     let mut drawer = Turtle::new();
-    drawer.print_info();
-    drawer.forward(10.0);
-    drawer.print_info();
-    drawer.print_field();
-    drawer.left(45.0);
-    drawer.forward(10.0);
-    drawer.print_info();
+    for _ in 0..2 {
+        drawer.forward(3.0);
+        drawer.left(90.0);
+        drawer.backward(10.0);
+        drawer.left(90.0);
+    }
+    drawer.tail_up = true;
+    drawer.backward(10.0);
+    drawer.right(90.0);
+    drawer.forward(8.0);
+    drawer.left(90.0);
+    drawer.tail_up = false;
+    for _ in 0..2 {
+        drawer.forward(16.0);
+        drawer.right(90.0);
+        drawer.forward(8.0);
+        drawer.right(90.0);
+    }
+
     drawer.print_field();
     println!("");
 }
