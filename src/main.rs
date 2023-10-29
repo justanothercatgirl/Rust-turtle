@@ -1,6 +1,9 @@
 use std::f32::consts;
 use std::mem;
-use std::io::{self, Write};
+use std::io;
+use std::io::Write;
+use phf::phf_map;
+use std::collections::HashMap;
 
 #[allow(unused)]
 fn transform(n: i32) -> i32 {
@@ -37,9 +40,9 @@ impl Turtle {
     fn backward(&mut self, distance: f32) {
         self.forward(-1.0 * distance)
     }
-
+    
     fn left(&mut self, angle_degrees: f32) {
-        // (a + bi)(c + di) = ac + (ab+cd)i - bd = ac-bd + (ab+cd)i
+        // (a + bi)(c + di) = ac + (ad+bc)i - bd = ac-bd + (ab+cd)i
         let angle_radians = angle_degrees*consts::PI/180.0;
         let (a, b, c, d) = (self.dir_cmplx.0, 
                             self.dir_cmplx.1,
@@ -130,9 +133,76 @@ impl Turtle {
     }
 }
 
+#[derive(Clone)]
+#[derive(Copy)]
+enum Command {
+    Noop,
+    Forward,
+    Back,
+    Left,
+    Right,
+    Up,
+    Down,
+    CycleBeg,
+    CycleEnd,
+}
+
+static COMMANDS: phf::Map<&'static str, Command> = phf_map! {
+    "вперёд" => Command::Forward,
+    "назад" => Command::Back,
+    "влево" => Command::Left,
+    "вправо" => Command::Right,
+    "поднять" => Command::Up,
+    "поднять хвост" => Command::Up,
+    "опустить" => Command::Down,
+    "опустить хвост" => Command::Down,
+    "нц" => Command::CycleBeg,
+    "кц" => Command::CycleEnd,
+};
+
+fn string_co_cmds(seq: &String) -> HashMap<Command, Option<f32>> {
+    todo!();
+    let mut map = HashMap::new();
+    for i in seq.split_whitespace() {
+        if COMMANDS.get(i) == None {
+            continue;
+        }
+    }
+    map
+}
+
 fn main()
 {
     let mut drawer = Turtle::new();
+    let mut input = String::new();
+    let mut command;
+    let mut in_cycle = false;
+    loop {
+        match io::stdin().read_line(&mut input) {
+            Ok(_) => (),
+            Err(_) => {
+                let mut stderr = io::stderr();
+                writeln!(&mut stderr, "could not read input").expect("could not write to stderr!");
+                continue;
+            }
+        }
+        command = *COMMANDS.get(input.trim()).unwrap_or(&Command::Noop);
+        match command {
+            Command::Noop => println!("неверная операция"),
+            Command::CycleBeg => {
+                in_cycle = true;
+            }
+            Command::CycleEnd => {
+                in_cycle = false;
+            }
+            _ => println!("valid"),
+        }
+        if !in_cycle {
+            input.clear();
+        }
+        println!("{input}");
+    }
+/*
     for _ in 0..2 {
         drawer.forward(3.0);
         drawer.left(90.0);
@@ -154,4 +224,5 @@ fn main()
 
     drawer.print_field();
     println!("");
+*/
 }
